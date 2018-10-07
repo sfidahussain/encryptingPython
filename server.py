@@ -4,10 +4,10 @@ from socket import AF_INET, SOCK_STREAM, SO_REUSEADDR, SOL_SOCKET, SHUT_RDWR
 import ssl   
   
 listen_addr = '127.0.0.1'
-# reserve a port on your computer in our 
-# case it is 9500 but it can be anything 
+# reserve a port on your computer 
 port = 9500   
 server_cert = 'server.crt'
+# private key
 server_key = 'server.key'
 
 context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
@@ -34,7 +34,7 @@ while True:
     print('Got connection from', addr)
     print("Client connected: {}:{}".format(addr[0], addr[1])) 
     conn = context.wrap_socket(c, server_side=True)
-    print("SSL established. Peer: {}".format(conn.getpeercert()))    
+    print("SSL established.")    
 
     data = conn.recv(1024).decode()
     if (data == 'Hello'): 

@@ -1,6 +1,6 @@
 # Import socket module 
 import socket, ssl    
-from ca import *
+from ca import validateCert
 
 # Message to send from client
 MESSAGE = "Hello"    
@@ -12,9 +12,7 @@ server_cert = 'server.crt'
 host_name = 'Sanaa Fidahussain' 
 
 # Returns a new context with secure default setting
-context = ssl.create_default_context(ssl.Purpose.SERVER_AUTH, cafile=server_cert)
-context.verify_mode = True
-context.load_verify_locations(server_cert)
+context = validateCert(server_cert)
 
 # Create a socket object 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)      
