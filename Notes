@@ -1,0 +1,92 @@
+Client.py
+# Initiate contact with server 
+# connect to the server on local computer 
+conn.connect((host, port))
+
+# Once the server sends its certificate, send that certificate to certificate authority
+
+# Depending on what you recieve back from certificate authority:
+# If you get a Public Key, encrypt a session cipher key to send back
+# If you get a null, send the server a 'Goodbye'
+
+# If the server sends a message through its session cipher key, decrypt message and send back a message.
+
+#!/usr/bin/python3
+
+import socket
+import ssl
+
+host_addr = '127.0.0.1'
+host_port = 8082
+server_sni_hostname = 'example.com'
+server_cert = 'server.crt'
+client_cert = 'client.crt'
+client_key = 'client.key'
+
+context = ssl.create_default_context(ssl.Purpose.SERVER_AUTH, cafile=server_cert)
+context.load_cert_chain(certfile=client_cert, keyfile=client_key)
+
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+conn = context.wrap_socket(s, server_side=False, server_hostname=server_sni_hostname)
+conn.connect((host_addr, host_port))
+print("SSL established. Peer: {}".format(conn.getpeercert()))
+print("Sending: 'Hello, world!")
+conn.send(b"Hello, world!")
+print("Closing connection")
+conn.close()
+
+
+Server.py
+# Once it recieves contact from the client, send certificate to validate
+
+# Depending on if you recieve a 'Goodbye' or a 'session cipher key':
+# decrypt 'session cipher key' with server private key
+# Send message to client with 'session cipher key'
+
+# Once client sends back message, encrypt it and close connection. 
+
+
+import socket
+from socket import AF_INET, SOCK_STREAM, SO_REUSEADDR, SOL_SOCKET, SHUT_RDWR
+import ssl
+
+listen_addr = '127.0.0.1'
+listen_port = 8082
+server_cert = 'server.crt'
+server_key = 'server.key'
+client_certs = 'client.crt'
+
+context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+context.verify_mode = ssl.CERT_REQUIRED
+context.load_cert_chain(certfile=server_cert, keyfile=server_key)
+context.load_verify_locations(cafile=client_certs)
+
+bindsocket = socket.socket()
+bindsocket.bind((listen_addr, listen_port))
+bindsocket.listen(5)
+
+while True:
+    print("Waiting for client")
+    newsocket, fromaddr = bindsocket.accept()
+    print("Client connected: {}:{}".format(fromaddr[0], fromaddr[1]))
+    conn = context.wrap_socket(newsocket, server_side=True)
+    print("SSL established. Peer: {}".format(conn.getpeercert()))
+    buf = b''  # Buffer to hold received client data
+    try:
+        while True:
+            data = conn.recv(4096)
+            if data:
+                # Client sent us data. Append to buffer
+                buf += data
+            else:
+                # No more data from client. Show buffer and close connection.
+                print("Received:", buf)
+                break
+    finally:
+        print("Closing connection")
+        conn.shutdown(socket.SHUT_RDWR)
+        conn.close()
+
+
+Ca.py
+# Accepts cert and returns public key associated with certificate or null if certificate isn't recognized

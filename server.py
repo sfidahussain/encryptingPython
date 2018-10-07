@@ -1,4 +1,3 @@
-
 # import the socket library 
 import socket
 from socket import AF_INET, SOCK_STREAM, SO_REUSEADDR, SOL_SOCKET, SHUT_RDWR
@@ -10,12 +9,9 @@ listen_addr = '127.0.0.1'
 port = 9500   
 server_cert = 'server.crt'
 server_key = 'server.key'
-client_certs = 'client.crt'
 
 context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
-context.verify_mode = ssl.CERT_REQUIRED
 context.load_cert_chain(certfile=server_cert, keyfile=server_key)
-context.load_verify_locations(cafile=client_certs)
 
 # next create a socket object 
 s = socket.socket()          
