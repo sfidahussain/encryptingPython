@@ -1,6 +1,5 @@
-
 # Import socket module 
-import socket, ssl              
+import socket, ssl           
 
 # Accepts cert and returns public key associated with certificate 
 # or null if certificate isn't recognized
@@ -8,5 +7,6 @@ import socket, ssl
 def validateCert(server_cert):
     context = ssl.create_default_context(ssl.Purpose.SERVER_AUTH, cafile=server_cert)
     context.verify_mode = True
+    # Validates certificate
     context.load_verify_locations(server_cert)
     return context
