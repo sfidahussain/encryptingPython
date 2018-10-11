@@ -6,7 +6,6 @@ from cryptography.x509.oid import NameOID
 import datetime
 import uuid
 
-
 def generateCertAndKeys(): 
     one_day = datetime.timedelta(1, 0, 0)
 

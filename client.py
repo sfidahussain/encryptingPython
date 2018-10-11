@@ -1,16 +1,11 @@
-# Import socket module 
-import socket, ssl, pickle  
+# Imports
+import socket
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
-from cryptography.x509.oid import NameOID
-from cryptography.fernet import Fernet
 from Crypto.PublicKey import RSA
-from cryptography.hazmat.primitives.asymmetric import padding
-from Crypto.Random import get_random_bytes
-from Crypto.Cipher import AES, PKCS1_OAEP
-from Crypto.Cipher import PKCS1_v1_5
+from Crypto.Cipher import AES, PKCS1_OAEP, PKCS1_v1_5
 from Crypto.Hash import SHA
 
 from ca import validateCert 
@@ -49,7 +44,6 @@ if(key != "Goodbye"):
 
     print('Sending cipher key: {}'.format(str(sessionCipherKey)))
     # Send encrypted session key
-    # data = pickle.dumps(sessionCipherKey)
     s.send("sessionCipherKey=" + str(sessionCipherKey))
     # Should recieve acknowledgment if server is using session cipher key
     acknowledgment = s.recv(1024).decode()
@@ -60,9 +54,7 @@ if(key != "Goodbye"):
     encrypted = sessionCipherKey.encrypt(message)
 
     print('Sending encrypted message: {}'.format(str(encrypted)))
-    # print('Sending decrypted message: {}'.format(str(decrypted)))
 
-    # encryptedData = pickle.dumps(encrypted)
     s.send("encrypted_message=" + encrypted)
 
     #Server's response
