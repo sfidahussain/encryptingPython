@@ -1,57 +1,81 @@
 # Import socket module 
-import socket, ssl    
+import socket, ssl, pickle  
+from cryptography import x509
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.x509.oid import NameOID
+from cryptography.fernet import Fernet
 from Crypto.PublicKey import RSA
+from cryptography.hazmat.primitives.asymmetric import padding
+from Crypto.Random import get_random_bytes
+from Crypto.Cipher import AES, PKCS1_OAEP
+from Crypto.Cipher import PKCS1_v1_5
+from Crypto.Hash import SHA
+
 from ca import validateCert 
   
 # Define the port on which you want to connect 
 port = 9500          
 host = '127.0.0.1'
-server_cert = 'server.crt'  
-host_name = 'Sanaa Fidahussain' 
-
-# Returns a new context with secure default setting
-context = validateCert(server_cert)
 
 # Create a socket object 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)      
 
-# Wrap an existing Python socket sock and return an instance of SSLContext
-# The returned SSL socket is tied to the context, its settings and certificates. 
-conn = context.wrap_socket(s, server_side=False, server_hostname=host_name)
-
 # connect to the server on local computer 
-conn.connect((host, port))
-# print("SSL established. Peer: {}".format(conn.getpeercert()))
-print("SSL established.")
+s.connect((host, port))
 
-#Tell server that connection is OK
-conn.send("Client: OK".encode())
+# Initiate contact with server
+print('Initiating contact with server')
+s.send("Initiated".encode())
 
-#Receive public key string from server
-serverPublicKeyString = conn.recv(1024).decode()
-print('Received public key from server.')
+#Receive cert from server
+serverCert = s.recv(1024).decode()
+print('Received {} from server.'.format(serverCert))
 
-#Remove extra characters
-serverPublicKeyString = serverPublicKeyString.replace("public_key=", '')
-print('Replacing string with {}'.format(serverPublicKeyString))
+# Send cert file to CA for validation
+key = validateCert(serverCert)
+print('Key given back from CA: {}'.format(str(key)))
 
-#Convert string to key
-serverPublicKey = RSA.importKey(serverPublicKeyString)
+if(key != "Goodbye"):
+    #Encrypt key to session cipher key USING public key
+    pem = key.public_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PublicFormat.SubjectPublicKeyInfo
+    )
 
-#Encrypt message and send to server
-message = "This is my secret message."
-encrypted = serverPublicKey.encrypt(message, 32)
+    pubKey = RSA.importKey(pem)
+    sessionCipherKey = PKCS1_OAEP.new(pubKey)
 
-print('Sending encrypted message: {}'.format(str(encrypted)))
-conn.send("encrypted_message=".encode()+str(encrypted).encode())
+    print('Sending cipher key: {}'.format(str(sessionCipherKey)))
+    # Send encrypted session key
+    # data = pickle.dumps(sessionCipherKey)
+    s.send("sessionCipherKey=" + str(sessionCipherKey))
+    # Should recieve acknowledgment if server is using session cipher key
+    acknowledgment = s.recv(1024).decode()
 
-#Server's response
-response = conn.recv(1024).decode()
-if(response == "Server: OK"):
-    print("Server decrypted message successfully")
+    #Encrypt message and send to server
+    message = b'This is my secret message.'
+    h = SHA.new(message)
+    encrypted = sessionCipherKey.encrypt(message)
 
-#Tell server to finish connection
-conn.send("Quit".encode())
+    print('Sending encrypted message: {}'.format(str(encrypted)))
+    # print('Sending decrypted message: {}'.format(str(decrypted)))
+
+    # encryptedData = pickle.dumps(encrypted)
+    s.send("encrypted_message=" + encrypted)
+
+    #Server's response
+    response = s.recv(1024).decode()
+    if(response == "Server: OK"):
+        print("Server decrypted message successfully")
+    #Tell server to finish connection
+    s.send("Quit".encode())
+
+else:
+    # Will send 'Goodbye' since certificate is not valid
+    s.send(str(key).encode())
+
 #Quit server response
-print(conn.recv(1024).decode()) 
-conn.close()
+print(s.recv(1024).decode()) 
+s.close()
