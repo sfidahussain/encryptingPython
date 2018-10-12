@@ -11,7 +11,7 @@ from Crypto.Hash import SHA
 from ca import validateCert 
   
 # Define the port on which you want to connect 
-port = 9500          
+port = 443          
 host = '127.0.0.1'
 
 # Create a socket object 

@@ -7,7 +7,7 @@ from Crypto.Cipher import AES, PKCS1_OAEP
 from ca import generateCertAndKeys 
   
 listen_addr = '127.0.0.1'
-port = 9500   
+port = 443   
 encrypt_str = "encrypted_message="
 sessionCipherKey_str = "sessionCipherKey="
 

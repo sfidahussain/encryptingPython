@@ -19,12 +19,12 @@ def generateCertAndKeys():
 
     builder = x509.CertificateBuilder()
     builder = builder.subject_name(x509.Name([
-    x509.NameAttribute(NameOID.COMMON_NAME, u'openstack-ansible Test CA'),
-    x509.NameAttribute(NameOID.ORGANIZATION_NAME, u'openstack-ansible'),
-    x509.NameAttribute(NameOID.ORGANIZATIONAL_UNIT_NAME, u'Default CA Deployment'),
+    x509.NameAttribute(NameOID.COMMON_NAME, u'Common Name'),
+    x509.NameAttribute(NameOID.ORGANIZATION_NAME, u'Organization Name'),
+    x509.NameAttribute(NameOID.ORGANIZATIONAL_UNIT_NAME, u'Unit Name'),
     ]))
     builder = builder.issuer_name(x509.Name([
-    x509.NameAttribute(NameOID.COMMON_NAME, u'openstack-ansible Test CA'),
+    x509.NameAttribute(NameOID.COMMON_NAME, u'Common Name'),
     ]))
     builder = builder.not_valid_before(datetime.datetime.today() - one_day)
     builder = builder.not_valid_after(datetime.datetime(2028, 8, 2))
@@ -34,7 +34,7 @@ def generateCertAndKeys():
 
     certificate = builder.sign(private_key=private_key, algorithm=hashes.SHA256(),backend=default_backend())
     print(isinstance(certificate, x509.Certificate))
-    filename = "ca.crt"
+    certName = "ca.crt"
     with open("ca.key", "wb") as f:
         f.write(private_key.private_bytes(
         encoding=serialization.Encoding.PEM,
@@ -42,12 +42,12 @@ def generateCertAndKeys():
         encryption_algorithm=serialization.NoEncryption()
         ))
 
-    with open(filename, "wb") as f:
+    with open(certName, "wb") as f:
         f.write(certificate.public_bytes(
         encoding=serialization.Encoding.PEM,
         ))
 
-    return filename, public_key, private_key, certificate
+    return certName, public_key, private_key, certificate
 
 def validateCert(certificate):
     with open(certificate, 'r') as f:
